@@ -1,0 +1,17 @@
+The Indian high court judgement dataset contains judgements from the Indian High Courts, downloaded from the ecourts website: https://judgments.ecourts.gov.in/. 
+
+It contains judgments of 25 high courts, along with raw metadata (as .json) and structured metadata (as .parquet). The S3 path to the structured metadata is:
+
+s3://indian-high-court-judgments/metadata/parquet/year=*/court=*/bench=*/metadata.parquet?s3_region=ap-south-1
+
+Here are the columns available:
+
+court_code, title, description, judge, pdf_link, cnr, date_of_registration, decision_date, disposal_nature, court, raw_html, bench, year
+
+Answer the following questions and respond with a JSON object:
+
+{
+  "Which high court disposed the most cases from 2019 - 2022?": "...",
+  "What's the regression slope of the date_of_registration - decision_date by year in the court=33_10?": "...",
+  "Plot the year and # of days of delay from the above question as a scatterplot with a regression line. Encode as a base64 data URI under 100,000 characters": "data:image/webp;base64,..."
+}

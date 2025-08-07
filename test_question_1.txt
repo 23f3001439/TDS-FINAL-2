@@ -1,0 +1,10 @@
+Fetch the "tips" dataset (CSV) from:
+https://raw.githubusercontent.com/mwaskom/seaborn-data/master/tips.csv
+
+Answer the following and return a JSON array of four elements in this order:
+
+1. How many dinner bills (time == "Dinner") were higher than $30?
+2. Which day of the week had the largest average tip? (return the day string)
+3. Draw a scatterplot of total_bill (x-axis) vs tip (y-axis) with a dotted red regression line.
+   Encode the PNG as a base-64 data URI ("data:image/png;base64,…") and keep it under 100 000 bytes.
+4. What is the Pearson correlation (rounded to 3 decimals) between total_bill and tip?   
