@@ -1,52 +1,74 @@
+
+
 #!/usr/bin/env python3
 import os
-import subprocess
+import sys
 import json
 import tempfile
-
-from fastapi import FastAPI, UploadFile, File, HTTPException
+import subprocess
+from fastapi import FastAPI, UploadFile, File, HTTPException, Response
 
 app = FastAPI()
+
+# Health/Root so Render/browser don’t 404
+@app.get("/")
+def root():
+    return {"status": "ok"}
+
+@app.head("/")
+def head_root():
+    return Response(status_code=200)
+
+@app.get("/healthz")
+def health():
+    return {"ok": True}
 
 @app.post("/api")
 async def analyze(file: UploadFile = File(...)):
     if not file.filename.lower().endswith(".txt"):
         raise HTTPException(400, "Upload a .txt file")
 
+    # Optional hard guard if your agent needs this
+    if not os.getenv("GEMINI_API_KEY"):
+        raise HTTPException(500, "GEMINI_API_KEY is not set")
+
     tmp_path = None
     try:
         data = await file.read()
-        
-        # Create temporary file
-        with tempfile.NamedTemporaryFile(mode='wb', suffix='.txt', delete=False) as tmp:
+
+        with tempfile.NamedTemporaryFile(mode="wb", suffix=".txt", delete=False) as tmp:
             tmp.write(data)
             tmp_path = tmp.name
 
-        # Run the data analyst agent
+        # Use the same Python interpreter Render used to install deps
         proc = subprocess.run(
-            ["python", "data_analyst_agent.py", tmp_path],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            timeout=170
+            [sys.executable, "data_analyst_agent.py", tmp_path],
+            capture_output=True,
+            text=True,
+            timeout=170,
         )
 
-        stdout = proc.stdout.decode("utf-8", errors="ignore")
-        stderr = proc.stderr.decode("utf-8", errors="ignore")
-
         if proc.returncode != 0:
-            message = f"Agent crashed (exit {proc.returncode})\nSTDERR:\n{stderr}\nSTDOUT:\n{stdout}"
-            raise HTTPException(500, detail=message)
+            raise HTTPException(
+                500,
+                detail=f"Agent crashed (exit {proc.returncode})\nSTDERR:\n{proc.stderr}\nSTDOUT:\n{proc.stdout}"
+            )
 
         try:
-            payload = json.loads(stdout)
+            payload = json.loads(proc.stdout)
         except json.JSONDecodeError as e:
-            message = f"Invalid JSON from agent (decode error: {e})\nRaw STDOUT:\n{stdout}\nRaw STDERR:\n{stderr}"
-            raise HTTPException(500, detail=message)
+            raise HTTPException(
+                500,
+                detail=f"Invalid JSON from agent (decode error: {e})\nRaw STDOUT:\n{proc.stdout}\nRaw STDERR:\n{proc.stderr}"
+            )
 
         return payload
 
     except subprocess.TimeoutExpired:
         raise HTTPException(504, "Processing timeout (170s reached)")
+
     finally:
         if tmp_path and os.path.isfile(tmp_path):
             os.remove(tmp_path)
+
+
