@@ -33,11 +33,12 @@ uvicorn main:app --host 0.0.0.0 --port 8080
 
 ### API Usage
 
-Send a POST request with a text file containing your data analysis question:
-
-```bash
+# Local test
 curl -X POST "http://localhost:8080/api" -F "file=@question.txt"
-```
+
+# Live deployed API
+curl -X POST "https://tds-final-2.onrender.com/api" -F "file=@test_question_1.txt"
+
 
 
 ### Example Questions
@@ -84,3 +85,8 @@ The application is configured for deployment on Render.com with the included `re
 ## License
 
 MIT License
+
+
+
+
+
